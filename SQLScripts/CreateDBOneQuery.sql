@@ -1,194 +1,182 @@
 --SQL Script to Create Full DB with one query:
 
-CREATE TABLE Login (
-    AccountId       SERIAL PRIMARY KEY  NOT NULL,
-    UserId          VARCHAR(20)         NOT NULL,
-    UserPass        VARCHAR(20)         NOT NULL,
-    Email           VARCHAR(40)         NOT NULL DEFAULT '',
-    Active          BOOLEAN             NOT NULL DEFAULT TRUE,
+CREATE TABLE account (
+    id_account       SERIAL PRIMARY KEY  NOT NULL,
+    user_login       VARCHAR(20)         NOT NULL,
+    user_pass        VARCHAR(20)         NOT NULL,
+    email            VARCHAR(40)         NOT NULL DEFAULT '',
+    active           BOOLEAN             NOT NULL DEFAULT TRUE,
 
-    UNIQUE(UserID, Email)
+    UNIQUE(user_login, email)
 );
 
-CREATE TABLE Characters (
-    CharId                    SERIAL PRIMARY KEY               NOT NULL,
-    OwnerAccountId            INT                              NOT NULL,
-    CharName                  VARCHAR(20)                      NOT NULL,
-    Level                     SMALLINT                         NOT NULL DEFAULT 1,
-    Exp                       BIGINT                           NOT NULL DEFAULT 0,
-    Skillpoints               SMALLINT                         NOT NULL DEFAULT 1,
-    Vit                       SMALLINT                         NOT NULL DEFAULT 0,                              
-    Str                       SMALLINT                         NOT NULL DEFAULT 0,
-    Gold                      INT                              NOT NULL DEFAULT 0,
-    MaxHP                     INT                              NOT NULL DEFAULT 100,
-    HP                        INT                              NOT NULL DEFAULT 100,
-    Online                    BOOLEAN                          NOT NULL DEFAULT FALSE,
-    LastOnline                TIMESTAMP                            NULL,
-    InventorySlots            SMALLINT                         NOT NULL DEFAULT 100,
-    CPartyId                  INT                              NOT NULL DEFAULT 0,
-    CGuildId                  INT                              NOT NULL DEFAULT 0, 
-    UNIQUE(CharName),
-    FOREIGN KEY (OwnerAccountId) REFERENCES Login(AccountId)
-);
-CREATE INDEX PlayerOnlineIndex ON Characters (Online);
+CREATE TABLE characters (
+    id_char                   SERIAL PRIMARY KEY               NOT NULL,
+    owner_account_id          INT                              NOT NULL,
+    char_name                 VARCHAR(20)                      NOT NULL,
+    char_lvl                  SMALLINT                         NOT NULL DEFAULT 1,
+    exp                       BIGINT                           NOT NULL DEFAULT 0,
+    skill_points               SMALLINT                         NOT NULL DEFAULT 1,
+    vit                       SMALLINT                         NOT NULL DEFAULT 0,                              
+    str                       SMALLINT                         NOT NULL DEFAULT 0,
+    gold                      INT                              NOT NULL DEFAULT 0,
+    max_hp                    INT                              NOT NULL DEFAULT 100,
+    hp                        INT                              NOT NULL DEFAULT 100,
+    is_online                 BOOLEAN                          NOT NULL DEFAULT FALSE,
+    last_online               TIMESTAMP                            NULL,
+    inventory_slots           SMALLINT                         NOT NULL DEFAULT 100,
+    char_party_id             INT                              NOT NULL DEFAULT 0,
+    char_guild_id             INT                              NOT NULL DEFAULT 0,
 
-CREATE TABLE Items (
-    ItemId                            SERIAL PRIMARY KEY              NOT NULL,
-    ItemName                          VARCHAR(40)                     NOT NULL,
-    Type                              VARCHAR(20)                     NOT NULL,
-    Subtype                           VARCHAR(20)                     NOT NULL,
-    SellPrice                         INT                                 NULL DEFAULT 10,
-    BuyPrice                          INT                                 NULL DEFAULT 10,
-    Attack                            INT                                 NULL,
-    Defense                           INT                                 NULL,
-    OtherValue                        INT                                 NULL,
-    MinEquipLevel                     SMALLINT                            NULL DEFAULT 1,
-    LocationHelmet                    BOOLEAN                             NULL DEFAULT FALSE,
-    LocationArmour                    BOOLEAN                             NULL DEFAULT FALSE,
-    LocationBottomArmour              BOOLEAN                             NULL DEFAULT FALSE,
-    LocationBoots                     BOOLEAN                             NULL DEFAULT FALSE,
-    LocationGloves                    BOOLEAN                             NULL DEFAULT FALSE,
-    LocationWeaponSlot1               BOOLEAN                             NULL DEFAULT FALSE,
-    LocationWeaponSlot2               BOOLEAN                             NULL DEFAULT FALSE,
-    StackAmount                       SMALLINT                            NULL,
-    StackInventory                    BOOLEAN                             NULL,
-    StackStorage                      BOOLEAN                             NULL,
-    StackGuildStorage                 BOOLEAN                             NULL,
-    UNIQUE(ItemName)
+    UNIQUE(char_name),
+    FOREIGN KEY (owner_account_id) REFERENCES account(id_account)
 );
-CREATE INDEX ItemIdIndex ON Items (ItemId);
+CREATE INDEX player_online_index ON characters (is_online);
 
-CREATE TABLE Equipment (
-    EqId             SERIAL PRIMARY KEY               NOT NULL,
-    EqCharId         INT                              NOT NULL,
-    EqItemId         INT                              NOT NULL,
-    EAmount          INT                              NOT NULL, 
-    Equiped          BOOLEAN                          NOT NULL DEFAULT FALSE,
-    FOREIGN KEY (EqCharId) REFERENCES Characters(CharId),
-    FOREIGN KEY (EqItemId) REFERENCES Items(ItemId) 
+CREATE TYPE ITEMTYPE AS ENUM('helmet','armour','bottom','boots','gloves','weapon','offhand','potion');
+
+CREATE TABLE items (
+    id_item                           SERIAL PRIMARY KEY              NOT NULL,
+    item_name                         VARCHAR(40)                     NOT NULL,
+    min_equip_lvl                     SMALLINT                            NULL DEFAULT 1,
+    item_type                         ITEMTYPE                        NOT NULL,
+    sell_price                        INT                                 NULL DEFAULT 10,
+    attack                            INT                                 NULL,
+    defense                           INT                                 NULL,
+    other_value                       INT                                 NULL,
+    stack_amount                      SMALLINT                            NULL,
+
+    UNIQUE(item_name)
+);
+CREATE INDEX id_item_index ON items (id_item);
+
+CREATE TABLE equipment (
+    id_equipment             SERIAL PRIMARY KEY               NOT NULL,
+    eq_owner_char_id         INT                              NOT NULL,
+    eq_item_id               INT                              NOT NULL,
+    eq_amount                INT                              NOT NULL, 
+    is_equiped               BOOLEAN                          NOT NULL DEFAULT FALSE,
+    FOREIGN KEY (eq_owner_char_id) REFERENCES characters(id_char),
+    FOREIGN KEY (eq_item_id) REFERENCES items(id_item) 
 );
 
-CREATE TABLE Storage (
-    StorId                SERIAL PRIMARY KEY               NOT NULL,
-    StorAcctId            INT                              NOT NULL,
-    StorItemId            INT                              NOT NULL,
-    SAmount               INT                              NOT NULL,
+CREATE TABLE storage (
+    id_storage            SERIAL PRIMARY KEY               NOT NULL,
+    storage_owner_id      INT                              NOT NULL,
+    storage_item_id       INT                              NOT NULL,
+    storage_item_amount   INT                              NOT NULL,
 
-    FOREIGN KEY (StorAcctId) REFERENCES Login(AccountId),
-    FOREIGN KEY (StorItemId) REFERENCES Items(ItemId)
+    FOREIGN KEY (storage_owner_id) REFERENCES account(id_account),
+    FOREIGN KEY (storage_item_id) REFERENCES items(id_item)
 );
 
-CREATE TABLE Party (
-  PartyId             SERIAL PRIMARY KEY            NOT NULL,
-  PartyName           VARCHAR(20)                   NOT NULL,
-  LeaderId            INT                           NOT NULL,
+CREATE TABLE party (
+  id_party             SERIAL PRIMARY KEY            NOT NULL,
+  party_name           VARCHAR(20)                   NOT NULL,
+  leader_id            INT                           NOT NULL,
 
-  FOREIGN KEY (LeaderId) REFERENCES Characters(CharId)
+  FOREIGN KEY (leader_id) REFERENCES characters(id_char)
 );
 
-CREATE TABLE Guild (
-  GuildId             SERIAL PRIMARY KEY              NOT NULL,
-  GuildName           VARCHAR(20)                     NOT NULL,
-  GmCharId            INT                             NOT NULL,
-  MaxMembers          SMALLINT                        NOT NULL DEFAULT 32,
+CREATE TABLE guild (
+  id_guild            SERIAL PRIMARY KEY              NOT NULL,
+  guild_name          VARCHAR(20)                     NOT NULL,
+  gm_char_id          INT                             NOT NULL,
+  max_members         SMALLINT                        NOT NULL DEFAULT 32,
 
-  Unique(GuildName),
-  FOREIGN KEY (GmCharId) REFERENCES Characters(CharId)
+  UNIQUE(guild_name),
+  FOREIGN KEY (gm_char_id) REFERENCES characters(id_char)
 );
 
-CREATE TABLE GuildStorage (
-    GuildStorId            SERIAL PRIMARY KEY               NOT NULL,
-    SGuildId               INT                              NOT NULL,
-    StorItemId             INT                              NOT NULL,
-    GAmount                INT                              NOT NULL,
+CREATE TABLE guild_storage (
+    id_guild_storage            SERIAL PRIMARY KEY               NOT NULL,
+    storage_guild_id            INT                              NOT NULL,
+    guild_storage_item_id       INT                              NOT NULL,
+    guild_item_amount           INT                              NOT NULL,
 
-    FOREIGN KEY (SGuildId) REFERENCES Guild(GuildId),
-    FOREIGN KEY (StorItemId) REFERENCES Items(ItemId)
+    FOREIGN KEY (storage_guild_id) REFERENCES guild(id_guild),
+    FOREIGN KEY (guild_storage_item_id) REFERENCES items(id_item)
 );
 
-CREATE TABLE GuildStorageLog (
-    GuildStorId            SERIAL PRIMARY KEY               NOT NULL,
-    SGuildId               INT                              NOT NULL,
-    StorItemId             INT                              NOT NULL,
-    GLogAmount             INT                              NOT NULL,
-    ActionTime             TIMESTAMP                        NOT NULL,
-    ActionCharId           INT                              NOT NULL,
-    FOREIGN KEY (SGuildId) REFERENCES Guild(GuildId),
-    FOREIGN KEY (StorItemId) REFERENCES Items(ItemId),
-    FOREIGN KEY (ActionCharId) REFERENCES Characters(CharId)
+CREATE TYPE STORAGEACTION AS ENUM('deposit','withdraw');
+
+CREATE TABLE guild_storage_log (
+    id_guild_storage            SERIAL PRIMARY KEY               NOT NULL,
+    storage_guild_id            INT                              NOT NULL,
+    guild_storage_item_id       INT                              NOT NULL,
+    guild_item_amount           INT                              NOT NULL,
+    storage_action              STORAGEACTION                    NOT NULL,
+    action_time                 TIMESTAMP                        NOT NULL,
+    action_char_id              INT                              NOT NULL,
+    FOREIGN KEY (storage_guild_id) REFERENCES guild(id_guild),
+    FOREIGN KEY (guild_storage_item_id) REFERENCES items(id_item),
+    FOREIGN KEY (action_char_id) REFERENCES characters(id_char)
 );
 
-CREATE TABLE GuildExpulsion (
-  ExplusionId           SERIAL PRIMARY KEY            NOT NULL,
-  ExGuildId             INT                           NOT NULL,
-  ExCharId              INT                           NOT NULL,
-
-  FOREIGN KEY (ExGuildId) REFERENCES Guild(GuildId),
-  FOREIGN KEY (ExCharId) REFERENCES Characters(CharId)
+CREATE TABLE guild_expulsion (
+  id_ex                 SERIAL PRIMARY KEY            NOT NULL,
+  ex_guild_id           INT                           NOT NULL,
+  ex_char_id            INT                           NOT NULL,
+  ex_message            VARCHAR(150),
+  FOREIGN KEY (ex_guild_id) REFERENCES guild(id_guild),
+  FOREIGN KEY (ex_char_id) REFERENCES characters(id_char)
 );
 
-CREATE TABLE Friends (
-  FriendId              SERIAl PRIMARY KEY            NOT NULL,
-  CharId1              INT                           NOT NULL,
-  CharId2               INT                           NOT NULL,
-
-  FOREIGN KEY (CharId1) REFERENCES Characters(CharId),
-  FOREIGN KEY (CharId2) REFERENCES Characters(CharId)
+CREATE TABLE friends (
+  id_friend            SERIAl PRIMARY KEY            NOT NULL,
+  char_id_1              INT                           NOT NULL,
+  char_id_2              INT                           NOT NULL,
+  FOREIGN KEY (char_id_1) REFERENCES characters(id_char),
+  FOREIGN KEY (char_id_2) REFERENCES characters(id_char)
 );
 
-CREATE TABLE Store (
-  StoreSlotId           SERIAL PRIMARY KEY                NOT NULL,
-  StoreItemId           INT                               NOT NULL,
-  Price                 INT                               NOT NULL,
+CREATE TABLE store (
+  id_store           SERIAL PRIMARY KEY                NOT NULL,
+  store_item_id      INT                               NOT NULL,
+  buy_price          INT                               NOT NULL,
 
-  FOREIGN KEY (StoreItemId) REFERENCES Items(ItemId)
+  FOREIGN KEY (store_item_id) REFERENCES items(id_item)
 );
 
-CREATE TABLE Mobs (
-  MobId                     SERIAL PRIMARY KEY                NOT NULL,
-  MobName                   VARCHAR(20)                       NOT NULL,
-  level                     SMALLINT                          NOT NULL,
-  Hp                        INT                               NOT NULL,
-  Attack                    INT                               NOT NULL DEFAULT 10,
-  Defense                   INT                               NOT NULL DEFAULT 0,
-  Vit                       SMALLINT                          NOT NULL DEFAULT 0,
-  Str                       SMALLINT                          NOT NULL DEFAULT 0,                             
-  DropItem1                 INT                                   NULL,
-  DropRate1                 SMALLINT                              NULL DEFAULT 1,
-  DropOption1               VARCHAR(20)                           NULL,
-  DropItem2                 INT                                   NULL,
-  DropRate2                 SMALLINT                              NULL DEFAULT 1,
-  DropOption2               VARCHAR(20)                           NULL,
-  DropItem3                 INT                                   NULL,
-  DropRate3                 SMALLINT                              NULL DEFAULT 1,
-  DropOption3               VARCHAR(20)                           NULL,
-  DropItem4                 INT                                   NULL,
-  DropRate4                 SMALLINT                              NULL DEFAULT 1,
-  DropOption4               VARCHAR(20)                           NULL,
-
-  UNIQUE(MobName),
-  FOREIGN KEY (DropItem1) REFERENCES Items(ItemId),
-  FOREIGN KEY (DropItem2) REFERENCES Items(ItemId),
-  FOREIGN KEY (DropItem3) REFERENCES Items(ItemId),
-  FOREIGN KEY (DropItem4) REFERENCES Items(ItemId)
+CREATE TABLE mobs (
+  id_mob                    SERIAL PRIMARY KEY                NOT NULL,
+  mob_name                  VARCHAR(20)                       NOT NULL,
+  mob_lvl                   SMALLINT                          NOT NULL,
+  mob_hp                    INT                               NOT NULL,
+  mob_attack                INT                               NOT NULL DEFAULT 10,
+  mob_defense               INT                               NOT NULL DEFAULT 0,
+  mob_vit                   SMALLINT                          NOT NULL DEFAULT 0,
+  mob_str                   SMALLINT                          NOT NULL DEFAULT 0,
+  UNIQUE(mob_name)
 );
 
-CREATE TYPE CHATRANGE AS ENUM('O','W','P','G');
+CREATE TABLE mobs_drop (
+  id_mobs_drop                SERIAL PRIMARY KEY                NOT NULL,
+  drop_mob_id                      INT                               NOT NULL,
+  drop_item_id                INT                                   NULL,
+  drop_rate                   SMALLINT                              NULL DEFAULT 1,
+  drop_option                 VARCHAR(20)                           NULL,
 
-CREATE TABLE Chatlog (
-  MsgId            BIGSERIAL PRIMARY KEY                NOT NULL,
-  MsgTime          TIMESTAMP                            NOT NULL,
-  ChatType         CHATRANGE                            NOT NULL DEFAULT 'O',
-  SrcCharId        INT                                  NOT NULL,
-  DstCharId        INT                                      NULL,
-  MessageText      VARCHAR(150)                         NOT NULL DEFAULT '',
-
-  FOREIGN KEY (SrcCharId) REFERENCES Characters(CharId),
-  FOREIGN KEY (DstCharId) REFERENCES Characters(CharId)
+  FOREIGN KEY (drop_mob_id) REFERENCES mobs(id_mob),
+  FOREIGN KEY (drop_item_id) REFERENCES items(id_item)
 );
 
-ALTER TABLE Characters ADD CONSTRAINT fk_characters_guild
-FOREIGN KEY (CGuildId) REFERENCES Guild(GuildId);
+CREATE TYPE CHATTYPE AS ENUM('Open','Whisper','Party','Guild');
 
-ALTER TABLE Characters ADD CONSTRAINT fk_characters_party
-FOREIGN KEY (CPartyId) REFERENCES Party(PartyId);
+CREATE TABLE chat_log (
+  id_msg            BIGSERIAL PRIMARY KEY                NOT NULL,
+  msg_time          TIMESTAMP                            NOT NULL,
+  chat_type         CHATTYPE                             NOT NULL DEFAULT 'Open',
+  src_char_id       INT                                  NOT NULL,
+  dst_char_id       INT                                      NULL,
+  msg_text          VARCHAR(150)                         NOT NULL DEFAULT '',
+
+  FOREIGN KEY (src_char_id) REFERENCES characters(id_char),
+  FOREIGN KEY (dst_char_id) REFERENCES characters(id_char)
+);
+
+ALTER TABLE characters ADD CONSTRAINT fk_characters_party
+FOREIGN KEY (char_party_id) REFERENCES party(id_party);
+
+ALTER TABLE characters ADD CONSTRAINT fk_characters_guild
+FOREIGN KEY (char_guild_id) REFERENCES guild(id_guild);
